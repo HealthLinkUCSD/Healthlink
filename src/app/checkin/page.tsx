@@ -135,7 +135,7 @@ export default function CheckInPage() {
 
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <label className="text-sm text-neutral-300">Your Name (optional)</label>
+                <label className="text-sm text-neutral-300">Your Name</label>
                 <input
                   type="text"
                   value={name}
