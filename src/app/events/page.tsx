@@ -12,10 +12,13 @@ type Event = {
   checkinClosesAt: string | null;
 };
 
+const PACIFIC_TZ = "America/Los_Angeles";
+
 const formatDateLabel = (dateString: string) =>
   new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
+    timeZone: PACIFIC_TZ,
   }).format(new Date(dateString));
 
 type CalendarDay = {
@@ -54,11 +57,32 @@ const buildCalendarDays = (
 
 type CalendarEvent = Event & { dateKey: string; startDate: Date | null; endDate: Date | null; timeLabel?: string };
 
-const formatLocalDateKey = (date: Date) => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+const toPacificDateKey = (dateInput: string | Date | null) => {
+  if (!dateInput) return null;
+  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+  if (Number.isNaN(date.getTime())) return null;
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: PACIFIC_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+
+  const lookup = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+  return `${lookup.year}-${lookup.month}-${lookup.day}`;
+};
+
+const formatPacificTimeRange = (start: Date | null, end: Date | null) => {
+  if (!start) return "";
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: PACIFIC_TZ,
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const startLabel = fmt.format(start);
+  const endLabel = end ? fmt.format(end) : null;
+  return endLabel ? `${startLabel} – ${endLabel}` : startLabel;
 };
 
 const UpcomingCalendar = ({ eventsData }: { eventsData: CalendarEvent[] }) => {
@@ -93,6 +117,7 @@ const UpcomingCalendar = ({ eventsData }: { eventsData: CalendarEvent[] }) => {
   const monthLabel = new Intl.DateTimeFormat("en-US", {
     month: "long",
     year: "numeric",
+    timeZone: PACIFIC_TZ,
   }).format(viewDate);
 
   return (
@@ -195,17 +220,8 @@ export default function EventsPage() {
       .map((ev) => {
         const start = ev.checkinOpensAt ? new Date(ev.checkinOpensAt) : null;
         const end = ev.checkinClosesAt ? new Date(ev.checkinClosesAt) : null;
-        const dateKey =
-          (ev.checkinOpensAt ?? ev.checkinClosesAt ?? "").slice(0, 10) || null;
-        const timeLabel = start
-          ? `${new Intl.DateTimeFormat("en-US", {
-              hour: "numeric",
-              minute: "2-digit",
-            }).format(start)}${end ? ` – ${new Intl.DateTimeFormat("en-US", {
-              hour: "numeric",
-              minute: "2-digit",
-            }).format(end)}` : ""}`
-          : "";
+        const dateKey = toPacificDateKey(ev.checkinOpensAt ?? ev.checkinClosesAt);
+        const timeLabel = formatPacificTimeRange(start, end);
 
         return { ...ev, dateKey, startDate: start, endDate: end, timeLabel };
       })
@@ -245,7 +261,7 @@ export default function EventsPage() {
 
   const nextEventDateLabel =
     nextEvent?.startDate
-      ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(
+      ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: PACIFIC_TZ }).format(
           nextEvent.startDate,
         )
       : nextEvent?.dateKey
@@ -313,10 +329,14 @@ export default function EventsPage() {
                         <span className="text-xs text-blue-100">
                           {new Intl.DateTimeFormat("en-US", {
                             month: "short",
+                            timeZone: PACIFIC_TZ,
                           }).format(displayDate)}
                         </span>
                         <span className="text-xl font-extrabold text-white">
-                          {displayDate.getDate()}
+                          {new Intl.DateTimeFormat("en-US", {
+                            day: "numeric",
+                            timeZone: PACIFIC_TZ,
+                          }).format(displayDate)}
                         </span>
                       </div>
                       <div>
