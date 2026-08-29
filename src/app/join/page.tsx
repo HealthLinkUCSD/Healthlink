@@ -1,28 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 const DEFAULT_NEXT_PATH = "/checkin";
 
 export default function JoinPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
-
-  const nextPath = useMemo(() => {
-    const requested = searchParams.get("next");
-    if (!requested || !requested.startsWith("/")) {
+  const [nextPath] = useState(() => {
+    if (typeof window === "undefined") {
       return DEFAULT_NEXT_PATH;
     }
-    return requested;
-  }, [searchParams]);
+
+    const requested = new URLSearchParams(window.location.search).get("next");
+    return requested?.startsWith("/") ? requested : DEFAULT_NEXT_PATH;
+  });
 
   useEffect(() => {
     const syncSession = async () => {
