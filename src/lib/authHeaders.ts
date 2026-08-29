@@ -1,9 +1,13 @@
-export const getAccessTokenHeaders = async (getAccessToken: () => Promise<string | null>) => {
+export const getAccessTokenHeaders = async (
+  getAccessToken: () => Promise<string | null>,
+): Promise<Record<string, string>> => {
   const accessToken = await getAccessToken();
 
-  return accessToken
-    ? {
-        Authorization: `Bearer ${accessToken}`,
-      }
-    : {};
+  if (!accessToken) {
+    return {};
+  }
+
+  return {
+    Authorization: `Bearer ${accessToken}`,
+  };
 };
