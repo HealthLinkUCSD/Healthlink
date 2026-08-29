@@ -7,6 +7,12 @@ import { supabase } from "@/lib/supabaseClient";
 
 const DEFAULT_NEXT_PATH = "/checkin";
 
+type MemberRecord = {
+  created_at: string;
+  email: string;
+  full_name: string;
+};
+
 export default function JoinPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -14,6 +20,8 @@ export default function JoinPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [memberRecord, setMemberRecord] = useState<MemberRecord | null>(null);
+  const [checkingMembership, setCheckingMembership] = useState(true);
   const [nextPath] = useState(() => {
     if (typeof window === "undefined") {
       return DEFAULT_NEXT_PATH;
@@ -30,14 +38,46 @@ export default function JoinPage() {
       } = await supabase.auth.getSession();
 
       setSessionEmail(session?.user.email ?? null);
+
+      if (!session?.user.id) {
+        setMemberRecord(null);
+        setCheckingMembership(false);
+        return;
+      }
+
+      const { data: member } = await supabase
+        .from("members")
+        .select("created_at, email, full_name")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      setMemberRecord(member);
+      setCheckingMembership(false);
     };
 
     void syncSession();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSessionEmail(session?.user.email ?? null);
+
+      if (!session?.user.id) {
+        setMemberRecord(null);
+        setCheckingMembership(false);
+        return;
+      }
+
+      setCheckingMembership(true);
+
+      const { data: member } = await supabase
+        .from("members")
+        .select("created_at, email, full_name")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      setMemberRecord(member);
+      setCheckingMembership(false);
     });
 
     return () => subscription.unsubscribe();
@@ -80,7 +120,17 @@ export default function JoinPage() {
     await supabase.auth.signOut();
     setStatus(null);
     setError(null);
+    setMemberRecord(null);
+    setCheckingMembership(false);
   };
+
+  const joinedOn = memberRecord?.created_at
+    ? new Date(memberRecord.created_at).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
+    : null;
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#071225] via-[#0a1b35] to-[#102647] px-6 py-24 text-white">
@@ -115,18 +165,45 @@ export default function JoinPage() {
               {loading ? "Sending link..." : "Send magic link"}
             </button>
           </form>
+        ) : checkingMembership ? (
+          <div className="mt-8 rounded-2xl border border-white/15 bg-white/5 p-5">
+            <p className="text-sm text-neutral-200">Finishing your membership...</p>
+          </div>
         ) : (
           <div className="mt-8 space-y-4 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-5">
+            <p className="text-xs uppercase tracking-[0.18em] text-emerald-200">Membership active</p>
+            <h2 className="text-2xl font-bold text-white">You&apos;re in HealthLink</h2>
             <p className="text-sm text-emerald-100">
               Signed in as <span className="font-semibold">{sessionEmail}</span>
             </p>
+            {memberRecord ? (
+              <div className="rounded-xl border border-emerald-300/20 bg-black/15 p-4 text-sm text-neutral-100">
+                <p>
+                  Member email: <span className="font-semibold">{memberRecord.email}</span>
+                </p>
+                {memberRecord.full_name ? (
+                  <p className="mt-1">
+                    Name on file: <span className="font-semibold">{memberRecord.full_name}</span>
+                  </p>
+                ) : null}
+                {joinedOn ? (
+                  <p className="mt-1">
+                    Joined on: <span className="font-semibold">{joinedOn}</span>
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-sm text-yellow-100">
+                Your login worked, but your membership record is still missing.
+              </p>
+            )}
             <div className="flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
                 onClick={handleContinue}
                 className="rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-5 py-3 font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:scale-[1.01]"
               >
-                Continue
+                Continue to member tools
               </button>
               <button
                 type="button"
