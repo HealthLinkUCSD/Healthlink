@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+type AuthenticatedUserMetadata = {
+  full_name?: string;
+  name?: string;
+};
+
 /**
  * POST /api/events/check-in-kiosk
  * Body: { eventId: string, accessCode: string, email: string, name?: string }
@@ -9,11 +14,29 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
  */
 export async function POST(req: Request) {
   try {
-    const { eventId, accessCode, email, name } = await req.json();
+    const authorization = req.headers.get("authorization");
+    const accessToken = authorization?.startsWith("Bearer ")
+      ? authorization.slice("Bearer ".length).trim()
+      : null;
 
-    if (!eventId || !accessCode || !email) {
+    if (!accessToken) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseAdmin.auth.getUser(accessToken);
+
+    if (userError || !user?.email) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+
+    const { eventId, accessCode } = await req.json();
+
+    if (!eventId || !accessCode) {
       return NextResponse.json(
-        { error: "eventId, accessCode, and email are required" },
+        { error: "eventId and accessCode are required" },
         { status: 400 },
       );
     }
@@ -33,13 +56,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid access code" }, { status: 401 });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = user.email.trim().toLowerCase();
+    const metadata = (user.user_metadata ?? {}) as AuthenticatedUserMetadata;
+    const displayName =
+      metadata.full_name ||
+      metadata.name ||
+      user.email.split("@")[0] ||
+      null;
 
     // Insert attendance into Supabase table
     const { error: insertError } = await supabaseAdmin.from("attendances").insert({
       event_id: eventId,
       email: normalizedEmail,
-      name: name?.trim() || null,
+      name: typeof displayName === "string" ? displayName.trim() : null,
     });
 
     if (insertError) {
@@ -56,10 +85,10 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ message: "Check-in successful" }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Kiosk check-in error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to check in" },
+      { error: error instanceof Error ? error.message : "Failed to check in" },
       { status: 500 },
     );
   }

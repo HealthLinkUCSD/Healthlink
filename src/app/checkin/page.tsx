@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabaseClient";
+import { getAccessTokenHeaders } from "@/lib/authHeaders";
 
 type Event = {
   id: string;
@@ -11,17 +13,49 @@ type Event = {
   accessCode?: string | null;
 };
 
+type UpcomingEventResponse = {
+  id: string;
+  title?: string | null;
+  date?: string | null;
+  location?: string | null;
+  checkinCode?: string | null;
+  checkinOpensAt?: string | null;
+  createdAt?: string | null;
+};
+
 export default function CheckInPage() {
   const [activeEvent, setActiveEvent] = useState<Event | null>(null);
   const [eventLoading, setEventLoading] = useState(false);
   const [eventError, setEventError] = useState<string | null>(null);
-
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [code, setCode] = useState("");
   const [checkinLoading, setCheckinLoading] = useState(false);
   const [checkinError, setCheckinError] = useState<string | null>(null);
   const [checkinSuccess, setCheckinSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    const syncSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      setSessionEmail(session?.user.email ?? null);
+      setAuthLoading(false);
+    };
+
+    void syncSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSessionEmail(session?.user.email ?? null);
+      setCheckinError(null);
+      setCheckinSuccess(null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -31,7 +65,7 @@ export default function CheckInPage() {
       try {
         const res = await fetch("/api/events/upcoming");
         if (!res.ok) throw new Error("Failed to load event");
-        const events = (await res.json()) as any[];
+        const events = (await res.json()) as UpcomingEventResponse[];
 
         if (!events || events.length === 0) {
           setActiveEvent(null);
@@ -61,28 +95,37 @@ export default function CheckInPage() {
       setCheckinError("No active event found.");
       return;
     }
+    if (!sessionEmail) {
+      setCheckinError("Sign in before checking in.");
+      return;
+    }
     setCheckinLoading(true);
     setCheckinError(null);
     setCheckinSuccess(null);
 
-    const trimmedEmail = email.trim();
     const trimmedCode = code.trim();
 
-    if (!trimmedEmail || !trimmedCode) {
-      setCheckinError("Email and access code are required.");
+    if (!trimmedCode) {
+      setCheckinError("Access code is required.");
       setCheckinLoading(false);
       return;
     }
 
     try {
+      const headers = await getAccessTokenHeaders(async () => {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        return session?.access_token ?? null;
+      });
+
       const res = await fetch("/api/events/check-in-kiosk", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify({
           eventId: activeEvent.id,
           accessCode: trimmedCode,
-          email: trimmedEmail,
-          name: name.trim() || undefined,
         }),
       });
 
@@ -134,26 +177,20 @@ export default function CheckInPage() {
             </div>
 
             <div className="space-y-3">
-              <div className="space-y-1.5">
-                <label className="text-sm text-neutral-300">Your Name</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
-                  className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm text-neutral-300">Your Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@ucsd.edu"
-                  className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
-                />
-              </div>
+              {authLoading ? (
+                <p className="text-sm text-neutral-300">Checking member session...</p>
+              ) : sessionEmail ? (
+                <div className="rounded-xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+                  Checking in as <span className="font-semibold">{sessionEmail}</span>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-yellow-400/25 bg-yellow-400/10 px-4 py-3 text-sm text-yellow-100">
+                  Sign in first to check into an event.{" "}
+                  <Link href="/join?next=/checkin" className="font-semibold underline">
+                    Member login
+                  </Link>
+                </div>
+              )}
               <div className="space-y-1.5">
                 <label className="text-sm text-neutral-300">Access Code</label>
                 <input
@@ -175,10 +212,16 @@ export default function CheckInPage() {
               <button
                 type="button"
                 onClick={handleCheckIn}
-                disabled={checkinLoading || !activeEvent}
+                disabled={checkinLoading || !activeEvent || !sessionEmail}
                 className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 font-semibold text-white shadow-lg shadow-blue-900/40 hover:shadow-xl hover:shadow-blue-900/60 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
-                {checkinLoading ? "Checking in..." : activeEvent ? "Check In" : "No active event"}
+                {checkinLoading
+                  ? "Checking in..."
+                  : !sessionEmail
+                    ? "Sign in to Check In"
+                    : activeEvent
+                      ? "Check In"
+                      : "No active event"}
               </button>
             </div>
           </>
