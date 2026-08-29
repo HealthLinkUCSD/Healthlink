@@ -74,7 +74,7 @@ export default function CheckInPage() {
           setActiveEvent({
             id: evt.id,
             title: evt.title || "Event",
-            date: evt.checkinOpensAt || evt.date || evt.createdAt,
+            date: evt.checkinOpensAt || evt.date || evt.createdAt || new Date().toISOString(),
             location: evt.location ?? null,
             accessCode: evt.checkinCode ?? null,
           });
