@@ -2,43 +2,34 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import TrackCards from "./TrackCards";
 
-export const metadata: Metadata = { title: "Hackathon 2026 | HealthLink UCSD", description: "Build a healthcare prototype October 2-4 at The Basement, UC San Diego. Signup deadline September 30." };
+export const metadata: Metadata = { title: "Hackathon 2026 | HealthLink UCSD", description: "Build a working life-sciences prototype with HealthLink, October 2-4 at The Basement. Four tracks. Signup deadline September 30." };
+const button = "inline-block rounded-full bg-blue-500 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-900/40 hover:bg-blue-400 transition";
 
 export default function HackathonPage() {
   return <main className="min-h-screen bg-gradient-to-b from-[#071225] via-[#0a1b35] to-[#102647] text-white">
-    <header className="relative bg-cover bg-center px-6 pb-16 pt-32" style={{ backgroundImage: "url('/home/hero_bg_large.png')" }}>
-      <div className="absolute inset-0 bg-black/65" />
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#071225]" />
-      <div className="relative mx-auto max-w-5xl">
-        <p className="text-sm uppercase tracking-[0.2em] text-blue-300">HealthLink UCSD</p>
-        <h1 className="mt-4 text-5xl font-extrabold sm:text-7xl">Hackathon 2026</h1>
-        <p className="mt-5 text-xl text-blue-100 sm:text-2xl">Build a healthcare prototype in one weekend.</p>
-        <dl className="mt-10 grid gap-6 border-y border-blue-300/20 py-6 sm:grid-cols-2">
-          <div><dt className="text-xl font-medium text-blue-300">When</dt><dd className="mt-2 text-2xl font-bold">October 2-4</dd><dd className="mt-1 text-sm text-neutral-300">Daily schedule coming soon</dd></div>
-          <div><dt className="text-xl font-medium text-blue-300">Where</dt><dd className="mt-2 text-2xl font-bold">The Basement</dd><dd className="mt-1 text-sm text-neutral-300">DIB Building, UC San Diego</dd></div>
-        </dl>
-        <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
-          <p className="font-semibold">Sign up by September 30</p>
-          <span className="rounded-full border border-blue-300/30 bg-blue-500/10 px-4 py-2 text-sm text-blue-200">Signup form coming soon</span>
-        </div>
+    <section className="relative overflow-hidden bg-cover bg-center px-6 pb-24 pt-36 text-center" style={{ backgroundImage: "url('/home/hero_bg_large.png')" }}>
+      <div className="absolute inset-0 bg-black/65" /><div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#071225]" />
+      <div className="relative mx-auto max-w-4xl space-y-6">
+        <p className="text-sm uppercase tracking-[0.25em] text-blue-300">HealthLink UCSD / October 2-4, 2026</p>
+        <h1 className="text-5xl font-extrabold leading-tight sm:text-7xl">HealthLink Hackathon</h1>
+        <p className="text-xl text-blue-100 sm:text-2xl">Build something that moves healthcare forward.</p>
+        <p className="mx-auto max-w-2xl text-neutral-300">Three days. Four tracks. A working prototype by Sunday. Bring a problem worth solving and turn it into something real.</p>
+        <div className="flex flex-wrap justify-center gap-3"><a href="#signup" className={button}>Signup details</a><a href="#tracks" className="rounded-full border border-white/25 px-6 py-3 font-semibold hover:bg-white/10">Explore the tracks</a></div>
+        <p className="text-sm text-blue-200">Signup deadline: September 30</p>
       </div>
-    </header>
-    <div className="mx-auto max-w-5xl space-y-12 px-6 pb-16">
-      <section id="tracks" className="scroll-mt-28 space-y-6">
-        <div><h2 className="text-3xl font-medium text-blue-300">Choose a track</h2><p className="mt-2 text-neutral-300">Tap a card for the challenge and build ideas.</p></div>
+    </section>
+    <div className="mx-auto max-w-6xl space-y-20 px-6 pb-20">
+      <section aria-label="Event essentials" className="grid gap-4 sm:grid-cols-3">
+        {[ ["When", "October 2-4, 2026", "Daily schedule coming soon"], ["Where", "The Basement", "DIB Building, UC San Diego"], ["Funding & potential prizes", "Coming soon", "Total amount to be announced"] ].map(([label, value, note]) => <div key={label} className="rounded-3xl border border-blue-500/30 bg-white/5 p-6 shadow-lg shadow-blue-900/20"><p className="text-xs uppercase tracking-[0.18em] text-blue-300">{label}</p><h2 className="mt-4 text-2xl font-bold">{value}</h2><p className="mt-2 text-sm text-neutral-300">{note}</p></div>)}
+      </section>
+      <section id="tracks" className="scroll-mt-28 space-y-8">
+        <div><p className="text-xs uppercase tracking-[0.2em] text-blue-300">Choose your challenge</p><h2 className="mt-3 text-4xl font-extrabold">Four tracks. Room to make your mark.</h2><p className="mt-4 text-neutral-300">Click or tap a square to flip it and explore the brief, partner, and build ideas.</p></div>
         <TrackCards />
-        <div className="space-y-2 border-b border-white/10 pb-6 text-sm text-neutral-300">
-          <p><strong className="text-white">Deliver a working prototype by Sunday.</strong> Show a real problem, user validation, and what you built.</p>
-          <p>OpenSwarm is free and optional for all tracks. If used, its effective application is evaluated.</p>
-          <p className="text-neutral-400">Use synthetic or authorized, de-identified data. Prototypes are not for clinical use.</p>
-        </div>
+        <div className="rounded-3xl border border-blue-500/30 bg-white/5 p-6 space-y-3"><h3 className="text-xl font-bold">OpenSwarm is optional. Building is not.</h3><p className="text-neutral-300">OpenSwarm is free, open source, and available to every team, regardless of track. Teams that use it will be evaluated on how effectively they put it to work.</p><p className="text-sm text-blue-200">Build with synthetic or appropriately authorized, de-identified data. Hackathon prototypes are for demonstration, not clinical use.</p></div>
       </section>
-      <section className="grid gap-8 sm:grid-cols-2">
-        <div><h2 className="text-3xl font-medium text-blue-300">Funding & prizes</h2><p className="mt-3 text-neutral-300">Total funding and potential prizes coming soon.</p></div>
-        <div><h2 className="text-3xl font-medium text-blue-300">Sponsors & partners</h2><Link href="/hackathon/sponsors" className="mt-3 inline-block text-blue-300 underline underline-offset-4 hover:text-blue-100">Meet the track partners</Link></div>
-      </section>
-      <section className="border-t border-white/10 pt-8"><h2 className="text-3xl font-medium text-blue-300">Last year</h2><p className="mt-3 text-neutral-300">Photos, prizes, and sponsors coming soon.</p></section>
-      <p className="text-sm text-neutral-300">Questions? <a className="text-blue-300 underline" href="mailto:healthlink@ucsd.edu">healthlink@ucsd.edu</a></p>
+      <section className="rounded-3xl border border-blue-500/40 bg-gradient-to-r from-blue-600/20 to-transparent p-8 sm:p-10"><p className="text-xs uppercase tracking-[0.2em] text-blue-300">Our ecosystem</p><h2 className="mt-3 text-4xl font-extrabold">Partners behind the problems.</h2><p className="my-5 max-w-2xl text-neutral-300">Meet the track partners bringing domain expertise to the weekend. The sponsorship lineup is coming soon.</p><Link href="/hackathon/sponsors" className={button}>Sponsors & partners</Link></section>
+      <section className="space-y-6"><div><h2 className="text-3xl font-medium text-blue-300">Last year at HealthLink</h2></div><div className="grid gap-6 sm:grid-cols-3">{["Photo highlights", "Prizes & winning builds", "Last year's sponsors"].map(title => <article key={title} className="flex min-h-52 flex-col justify-end rounded-3xl border border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-white/5 p-6"><h3 className="text-xl font-bold">{title}</h3><p className="mt-3 text-neutral-400">Coming soon</p></article>)}</div></section>
+      <section id="signup" className="scroll-mt-28 rounded-3xl border border-blue-400/40 bg-blue-500/10 p-8 text-center sm:p-12"><h2 className="text-3xl font-medium text-blue-300">Applications</h2><p className="mt-4 text-lg text-neutral-200">Signup deadline: September 30, 2026.</p><p className="mt-5 rounded-xl border border-white/10 bg-white/5 p-4 text-blue-200">Google signup form coming soon.</p><p className="mt-4 text-sm text-neutral-300">Questions? <a className="underline hover:text-blue-200" href="mailto:healthlink@ucsd.edu">healthlink@ucsd.edu</a></p></section>
     </div>
   </main>;
 }
