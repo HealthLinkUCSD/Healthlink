@@ -1,5 +1,4 @@
 import Footer from "@/components/Footer";
-import MemberNav from "@/components/MemberNav";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -37,7 +36,6 @@ export default function RootLayout({
             <Link href="/ideation">Ideation</Link>
             <Link href="/team">Team</Link>
             <Link href="/checkin">Check In</Link>
-            <MemberNav />
           </nav>
         </header>
         {children}
