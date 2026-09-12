@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-const DEFAULT_NEXT_PATH = "/checkin";
+const DEFAULT_NEXT_PATH = "/events";
 
 type MemberRecord = {
   created_at: string;
@@ -27,8 +27,9 @@ export default function JoinPage() {
       return DEFAULT_NEXT_PATH;
     }
 
-    const requested = new URLSearchParams(window.location.search).get("next");
-    return requested?.startsWith("/") ? requested : DEFAULT_NEXT_PATH;
+    const requested = new URLSearchParams(window.location.search).get("next") || window.localStorage.getItem("healthlink-return-to");
+    return requested && /^\/(events|checkin|analytics)([/?]|$)/.test(requested) && !requested.includes("\\")
+      ? requested : DEFAULT_NEXT_PATH;
   });
 
   useEffect(() => {
@@ -45,13 +46,14 @@ export default function JoinPage() {
         return;
       }
 
-      const { data: member } = await supabase
+      const { data: member, error: memberError } = await supabase
         .from("members")
         .select("created_at, email, full_name")
         .eq("id", session.user.id)
         .maybeSingle();
 
       setMemberRecord(member);
+      if (memberError) setError("We could not load your membership. Please refresh to try again.");
       setCheckingMembership(false);
     };
 
@@ -59,7 +61,7 @@ export default function JoinPage() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSessionEmail(session?.user.email ?? null);
 
       if (!session?.user.id) {
@@ -70,14 +72,8 @@ export default function JoinPage() {
 
       setCheckingMembership(true);
 
-      const { data: member } = await supabase
-        .from("members")
-        .select("created_at, email, full_name")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      setMemberRecord(member);
-      setCheckingMembership(false);
+      // Run outside the auth callback so the database request can acquire the auth lock.
+      setTimeout(() => { void syncSession(); }, 0);
     });
 
     return () => subscription.unsubscribe();
@@ -96,10 +92,16 @@ export default function JoinPage() {
     setError(null);
     setStatus(null);
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://healthlink-nine.vercel.app";
+    if (window.location.origin !== new URL(siteUrl).origin && window.location.hostname !== "localhost") {
+      window.location.assign(siteUrl + "/join?next=" + encodeURIComponent(nextPath));
+      return;
+    }
+    window.localStorage.setItem("healthlink-return-to", nextPath);
     const { error: signInError } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
       options: {
-        emailRedirectTo: `${window.location.origin}/join?next=${encodeURIComponent(nextPath)}`,
+        emailRedirectTo: `${siteUrl}/join`,
       },
     });
 
@@ -136,13 +138,13 @@ export default function JoinPage() {
     <main className="min-h-screen bg-gradient-to-b from-[#071225] via-[#0a1b35] to-[#102647] px-6 py-24 text-white">
       <section className="mx-auto w-full max-w-xl rounded-3xl border border-blue-500/30 bg-white/5 p-8 shadow-2xl shadow-blue-900/40">
         <p className="text-sm uppercase tracking-[0.24em] text-blue-300">Join HealthLink</p>
-        <h1 className="mt-3 text-4xl font-extrabold">Member login</h1>
+        <h1 className="mt-3 text-4xl font-extrabold">{sessionEmail ? "My membership" : "Join HealthLink"}</h1>
         <p className="mt-3 text-neutral-300">
           Public pages stay open. Sign in only when you want to join HealthLink or check into an
           event.
         </p>
 
-        {!sessionEmail ? (
+        {checkingMembership ? <p className="mt-8" role="status">Checking your membership...</p> : !sessionEmail ? (
           <form onSubmit={handleSendLink} className="mt-8 space-y-4">
             <label htmlFor="email" className="block text-sm text-neutral-200">
               UCSD email
@@ -171,8 +173,8 @@ export default function JoinPage() {
           </div>
         ) : (
           <div className="mt-8 space-y-4 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-5">
-            <p className="text-xs uppercase tracking-[0.18em] text-emerald-200">Membership active</p>
-            <h2 className="text-2xl font-bold text-white">You&apos;re in HealthLink</h2>
+            <p className="text-xs uppercase tracking-[0.18em] text-emerald-200">{memberRecord ? "Membership confirmed" : "Membership not confirmed"}</p>
+            <h2 className="text-2xl font-bold text-white">{memberRecord ? "Welcome to HealthLink" : "You are signed in"}</h2>
             <p className="text-sm text-emerald-100">
               Signed in as <span className="font-semibold">{sessionEmail}</span>
             </p>
@@ -203,7 +205,7 @@ export default function JoinPage() {
                 onClick={handleContinue}
                 className="rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-5 py-3 font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:scale-[1.01]"
               >
-                Continue to member tools
+                {nextPath.startsWith("/checkin") ? "Continue to event check-in" : nextPath.startsWith("/analytics") ? "View analytics" : "Explore events"}
               </button>
               <button
                 type="button"

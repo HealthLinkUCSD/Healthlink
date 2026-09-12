@@ -12,7 +12,7 @@ export async function GET() {
     const { data, error } = await supabaseAdmin
       .from("events")
       .select(
-        "id, title, description, location, checkin_code, checkin_opens_at, checkin_closes_at, created_at",
+        "id, title, description, location, checkin_opens_at, checkin_closes_at, created_at",
       )
       .or(`checkin_closes_at.gte.${nowIso},checkin_opens_at.gte.${nowIso}`)
       .order("checkin_opens_at", { ascending: true });
@@ -20,22 +20,21 @@ export async function GET() {
     if (error) throw error;
 
     const normalized =
-      data?.map((event: any) => ({
+      data?.map((event) => ({
         id: event.id,
         title: event.title,
         description: event.description,
         location: event.location,
         checkinOpensAt: event.checkin_opens_at,
         checkinClosesAt: event.checkin_closes_at,
-        checkinCode: event.checkin_code,
         createdAt: event.created_at ?? null,
       })) ?? [];
 
     return NextResponse.json(normalized);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Upcoming events fetch failed:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to fetch events" },
+      { error: error instanceof Error ? error.message : "Failed to fetch events" },
       { status: 500 },
     );
   }

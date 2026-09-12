@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
     const { eventId, accessCode } = await req.json();
 
-    if (!eventId || !accessCode) {
+    if (typeof eventId !== "string" || (accessCode != null && typeof accessCode !== "string")) {
       return NextResponse.json(
         { error: "eventId and accessCode are required" },
         { status: 400 },
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     // Verify event and code
     const { data: event, error: eventError } = await supabaseAdmin
       .from("events")
-      .select("id, checkin_code")
+      .select("id, checkin_code, checkin_opens_at, checkin_closes_at")
       .eq("id", eventId)
       .single();
 
@@ -52,7 +52,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    if (event.checkin_code !== accessCode) {
+    const now = Date.now();
+    if (!event.checkin_opens_at || !event.checkin_closes_at ||
+        now < new Date(event.checkin_opens_at).getTime() ||
+        now >= new Date(event.checkin_closes_at).getTime()) {
+      return NextResponse.json({ error: "Check-in is not open for this event." }, { status: 403 });
+    }
+    if (!user.email_confirmed_at || !user.email.toLowerCase().endsWith("@ucsd.edu")) {
+      return NextResponse.json({ error: "A verified UCSD email is required." }, { status: 403 });
+    }
+    if (event.checkin_code && event.checkin_code !== accessCode?.trim()) {
       return NextResponse.json({ error: "Invalid access code" }, { status: 401 });
     }
 
@@ -74,8 +83,8 @@ export async function POST(req: Request) {
     if (insertError) {
       if (insertError.code === "23505") {
         return NextResponse.json(
-          { error: "You already checked in for this event" },
-          { status: 409 },
+          { message: "Already checked in", attended: true },
+          { status: 200 },
         );
       }
       return NextResponse.json(
