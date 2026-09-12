@@ -33,6 +33,7 @@ export default function RootLayout({
           <nav aria-label="Main navigation" className="flex flex-wrap justify-center items-center gap-3 text-xs sm:text-sm font-semibold text-white bg-slate-950/90 px-4 py-2 rounded-3xl border border-white/10 backdrop-blur-md">
             <Link href="/">About</Link>
             <Link href="/events">Events</Link>
+            <Link href="/hackathon">Hackathon</Link>
             <Link href="/ideation">Ideation</Link>
             <Link href="/team">Team</Link>
             <Link href="/checkin">Check In</Link>

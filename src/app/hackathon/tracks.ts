@@ -1,0 +1,38 @@
+export const tracks = [
+  {
+    title: "Swarm-Enabled Clinical Diagnostics & Autonomous Image Analysis",
+    short: "See more. Explain why.",
+    partner: "OpenSwarm",
+    problem: "Radiologists and pathologists evaluate tens of thousands of images under immense time pressure. Gigabyte-scale fMRI scans and whole-slide histology can hide early anomalies, while traditional AI flags a region without explaining why.",
+    objective: "Build an agentic diagnostic workflow: pre-process heavy imagery, identify anomalies, cross-reference medical literature for differential diagnoses, and draft a clinician-ready report explaining the reasoning.",
+    ideas: ["Coordinate agents across image preparation, anomaly review, and literature search.", "Build a report with traceable evidence and uncertainty for clinician review."],
+    detail: "OpenSwarm: build the agent layer on their desktop orchestrator.",
+  },
+  {
+    title: "AI for Clinical Research & Trial Operations",
+    short: "Less paperwork. Better research.",
+    partner: "Harbor",
+    problem: "Startups often outsource clinical studies to CROs, paying for slow, manual, error-prone processes. Protocol amendments create rework, data quality can disappoint, and lean teams lack a real-time view of their trial.",
+    objective: "Help a small team run a rigorous study: AI-assisted protocols, source data capture, site-data anomaly detection, proactive monitoring, or patient interfaces that reduce dropout. Treat compliance as a design constraint, with audit trails, e-signatures, and version control.",
+    ideas: ["Flag study-data inconsistencies and surface monitoring risks.", "Track protocol changes with a reviewable version history.", "Prototype a patient-facing visit and follow-up companion."],
+    detail: "Harbor: compliant EDC domain expertise, with a workshop before ideation opens. Track brief references GCP and 21 CFR Part 11; a prototype is not a compliance certification.",
+  },
+  {
+    title: "Personalized Medicine: From Intake to Approved Formulation",
+    short: "Make every decision traceable.",
+    partner: "CLD-9",
+    problem: "Robotic compounding makes individualized doses economically viable, but deciding, justifying, and documenting a formulation remains a bottleneck. Today that process runs through a pharmacist, questionnaires, spreadsheets, and memory.",
+    objective: "Turn intake data into a candidate formulation with explicit rationale. Surface interactions, contraindications, and cumulative dose ceilings for professional review. Generate an auditable decision record, or build the digital batch record a pharmacy or telehealth partner needs before release.",
+    ideas: ["Connect synthetic intake data to a reviewable formulation rationale.", "Prototype interaction and dose-ceiling alerts with evidence links.", "Build a digital batch-record review interface."],
+    detail: "CLD-9: explore what the Nexus platform consumes and produces, with Khushang judging.",
+  },
+  {
+    title: "Open Problem Challenge",
+    short: "Your problem. A working build.",
+    partner: "Bring your own problem",
+    problem: "Already building in life sciences, or found a problem the other tracks do not cover? Bring it here: healthcare delivery, biotech tooling, diagnostics, lab operations, or patient access.",
+    objective: "Deliver a working prototype by Sunday, not a pitch for one. Teams are judged on the strength of the problem, evidence of validation with someone who has it, and how far the build actually got.",
+    ideas: ["Remove a repetitive bottleneck in a research lab.", "Help patients navigate an access barrier.", "Bring an existing life-sciences project and make meaningful progress."],
+    detail: "The same working-prototype standard applies across all four tracks.",
+  },
+];

@@ -1,0 +1,10 @@
+.card { aspect-ratio: 1; perspective: 1400px; min-width: 0; }
+.inner { height: 100%; position: relative; transform-style: preserve-3d; transition: transform 600ms ease; }
+.flipped { transform: rotateY(180deg); }
+.face { position: absolute; inset: 0; border: 1px solid rgb(59 130 246 / .4); border-radius: 24px; padding: clamp(20px, 4vw, 32px); backface-visibility: hidden; box-shadow: 0 16px 40px rgb(10 30 70 / .3); }
+.front { width: 100%; display: flex; flex-direction: column; text-align: left; cursor: pointer; background: radial-gradient(circle at 100% 0, rgb(59 130 246 / .22), transparent 65%), #10213b; }
+.front:hover { border-color: #93c5fd; }
+.title { display: block; font-size: clamp(1.1rem, 3vw, 2rem); font-weight: 800; line-height: 1.15; }
+.front:focus-visible { outline: 3px solid #93c5fd; outline-offset: 4px; }
+.back { transform: rotateY(180deg); background: #0e203a; overflow-y: auto; }
+@media (prefers-reduced-motion: reduce) { .inner { transition: none; } }

@@ -305,6 +305,15 @@ export default function EventsPage() {
           </div>
         </div>
 
+        {!loading && !error && events.some(event => event.id === "5ca42c84-142e-402f-ae72-f635fa2bd6cd") ? (
+          <article className="rounded-3xl border border-blue-400/40 bg-gradient-to-r from-blue-600/20 to-transparent p-8 space-y-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-blue-300">October 2-4, 2026 / The Basement</p>
+            <h3 className="text-3xl font-bold">HealthLink Hackathon</h3>
+            <p className="text-neutral-300">Four tracks. A working prototype by Sunday. Signup deadline September 30; daily schedule coming soon.</p>
+            <Link href="/hackathon" className="inline-block rounded-full bg-blue-500 px-6 py-3 font-semibold hover:bg-blue-400">Explore the hackathon</Link>
+          </article>
+        ) : null}
+
         {loading ? (
           <p className="text-neutral-300">Loading events...</p>
         ) : error ? (
