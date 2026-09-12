@@ -2,14 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { googleCalendarUrl } from "@/lib/eventCalendar";
 
 type ClubEvent = { id: string; title: string; description: string | null; location: string | null; checkinOpensAt: string | null; checkinClosesAt: string | null };
 const dateLabel = (value: string | null) => value ? new Date(value).toLocaleString("en-US", { timeZone: "America/Los_Angeles", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " PT" : "Time to be announced";
-function calendar(event: ClubEvent) {
-  if (!event.checkinOpensAt || !event.checkinClosesAt) return null;
-  const stamp = (value: string) => new Date(value).toISOString().replace(/[-:]/g, "").replace(".000", "");
-  return "https://calendar.google.com/calendar/render?" + new URLSearchParams({ action: "TEMPLATE", text: event.title, dates: stamp(event.checkinOpensAt) + "/" + stamp(event.checkinClosesAt), details: event.description || "", location: event.location || "" });
-}
 export default function EventExperience({ checkin = false }: { checkin?: boolean }) {
   const [events, setEvents] = useState<ClubEvent[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -53,6 +49,7 @@ export default function EventExperience({ checkin = false }: { checkin?: boolean
   }
   const action = "inline-block rounded-xl bg-blue-500 px-5 py-3 font-semibold hover:bg-blue-400 transition";
   function card(event: ClubEvent, featured = false) {
+    const calendarUrl = googleCalendarUrl(event);
     return <article key={event.id} className={"rounded-3xl border p-6 sm:p-8 " + (featured ? "border-blue-400/40 bg-gradient-to-br from-blue-500/20 to-transparent" : "border-white/10 bg-white/5")}>
       <p className="text-xs uppercase tracking-[0.18em] text-blue-200">{attended.includes(event.id) ? "Attended" : open(event) ? "Check-in open" : past(event) ? "Past event" : featured ? "Next up" : "Upcoming"}</p>
       <h2 className="mt-4 text-3xl font-bold">{event.title}</h2>
@@ -60,7 +57,7 @@ export default function EventExperience({ checkin = false }: { checkin?: boolean
       <p className="mt-1 text-slate-300">{event.location || "Location to be announced"}</p>
       <p className="my-6 max-w-2xl text-slate-300">{event.description || "Come connect with the HealthLink community."}</p>
       <Link className={action} href={"/checkin?event=" + encodeURIComponent(event.id)}>{attended.includes(event.id) ? "View attendance" : open(event) ? "Check in" : "View event"}</Link>
-      {!past(event) && calendar(event) && <a className="ml-4 inline-block py-3 text-blue-200 underline" href={calendar(event)!} target="_blank" rel="noreferrer">Add to Google Calendar</a>}
+      {calendarUrl ? <a className="mt-3 inline-block rounded-xl border border-blue-300/40 px-5 py-3 font-semibold text-blue-100 hover:bg-blue-400/10 sm:ml-4" href={calendarUrl} target="_blank" rel="noreferrer" aria-label={`Add ${event.title} to Google Calendar (opens in a new tab)`}>Add to Google Calendar</a> : <p className="mt-3 text-sm text-slate-400">Calendar link available once the event time is confirmed.</p>}
     </article>;
   }
   return <main className="min-h-screen bg-gradient-to-b from-[#071225] via-[#0a1b35] to-[#102647] px-5 py-32 text-white">
@@ -80,8 +77,9 @@ export default function EventExperience({ checkin = false }: { checkin?: boolean
             <label htmlFor="email" className="block">UCSD email</label>
             <input id="email" type="email" required maxLength={254} autoComplete="email" placeholder="name@ucsd.edu" value={email} onChange={e => setEmail(e.target.value)} className="w-full rounded-xl border border-white/20 bg-slate-950 px-4 py-3" />
             <p className="text-sm text-slate-400">Your name, email, and attendance are recorded for HealthLink board analytics. Email addresses are not verified.</p>
-            <label htmlFor="code" className="block">Event code <span className="text-slate-400">(if provided by the board)</span></label>
-            <input id="code" value={code} onChange={e => setCode(e.target.value)} className="w-full rounded-xl border border-white/20 bg-slate-950 px-4 py-3" autoComplete="off" />
+            <label htmlFor="code" className="block">Event code</label>
+            <p id="code-help" className="text-sm text-slate-400">Enter the code shared by the board at this event. Codes are case-sensitive.</p>
+            <input id="code" required maxLength={128} aria-describedby="code-help" value={code} onChange={e => setCode(e.target.value)} className="w-full rounded-xl border border-white/20 bg-slate-950 px-4 py-3" autoComplete="off" autoCapitalize="none" spellCheck={false} />
             <button disabled={busy} className={action + " disabled:opacity-50"}>{busy ? "Recording..." : "Check in to this event"}</button>
           </form>}
         </section><Link className="inline-block text-blue-200 underline" href="/events">All events</Link>

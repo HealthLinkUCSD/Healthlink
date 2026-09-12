@@ -46,6 +46,18 @@ async function main() {
   }
   assert.equal((await submit({ ...body, accessCode: "wrong" })).status, 401);
   assert.equal(inserted, null);
+  for (const accessCode of [undefined, null, "", "   "]) {
+    assert.equal((await submit({ ...body, accessCode })).status, 400);
+    assert.equal(inserted, null);
+  }
+  for (const storedCode of [null, "", "   "]) {
+    event.checkin_code = storedCode;
+    assert.equal((await submit(body)).status, 403);
+    assert.equal(inserted, null);
+  }
+  event.checkin_code = " BOARD ";
+  assert.equal((await submit({ ...body, accessCode: " BOARD " })).status, 201);
+  assert.equal((await submit({ ...body, accessCode: "board" })).status, 401);
   event.checkin_closes_at = new Date(Date.now() - 1000).toISOString();
   assert.equal((await submit(body)).status, 403);
   event.checkin_closes_at = "invalid";

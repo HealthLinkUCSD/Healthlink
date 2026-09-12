@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 /**
  * POST /api/events/check-in-kiosk
- * Body: { eventId: string, accessCode: string, email: string, name?: string }
+ * Body: { eventId: string, accessCode: string, email: string, name: string }
  * Pure Supabase version: validates access code against Supabase events table
  * and records attendance in a Supabase table (attendances).
  */
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     }
     const { eventId, accessCode, email, name } = body;
 
-    if (typeof eventId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(eventId) || (accessCode != null && (typeof accessCode !== "string" || accessCode.length > 128))) {
+    if (typeof eventId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(eventId) || typeof accessCode !== "string" || !accessCode.trim() || accessCode.length > 128) {
       return NextResponse.json(
         { error: "eventId and accessCode are required" },
         { status: 400 },
@@ -44,7 +44,10 @@ export async function POST(req: Request) {
         now >= new Date(event.checkin_closes_at).getTime()) {
       return NextResponse.json({ error: "Check-in is not open for this event." }, { status: 403 });
     }
-    if (event.checkin_code && event.checkin_code !== accessCode?.trim()) {
+    if (typeof event.checkin_code !== "string" || !event.checkin_code.trim()) {
+      return NextResponse.json({ error: "Check-in is not configured yet. Please ask a board member." }, { status: 403 });
+    }
+    if (event.checkin_code.trim() !== accessCode.trim()) {
       return NextResponse.json({ error: "Invalid access code" }, { status: 401 });
     }
 
