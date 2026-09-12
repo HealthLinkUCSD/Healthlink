@@ -224,12 +224,11 @@ export default function EventsPage() {
   }, [events]);
 
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
 
   const upcoming = enriched.filter((ev) => {
     const close = ev.checkinClosesAt ? new Date(ev.checkinClosesAt) : null;
     const open = ev.checkinOpensAt ? new Date(ev.checkinOpensAt) : null;
-    return (close && close >= today) || (open && open >= today);
+    return close ? close > today : Boolean(open && open >= today);
   });
 
   const sortedUpcoming = [...upcoming].sort((a, b) => {
@@ -244,7 +243,8 @@ export default function EventsPage() {
     return aTime - bTime;
   });
 
-  const displayEvents = sortedUpcoming.length ? sortedUpcoming : fallbackSorted;
+  const displayEvents = sortedUpcoming;
+  const pastEvents = fallbackSorted.filter(event => !upcoming.includes(event)).reverse();
   const nextEvent = sortedUpcoming[0] ?? null;
   const calendarEvents: CalendarEvent[] = (sortedUpcoming.length ? sortedUpcoming : fallbackSorted)
     .filter((ev) => Boolean(ev.dateKey))
@@ -309,6 +309,8 @@ export default function EventsPage() {
           <p className="text-neutral-300">Loading events...</p>
         ) : error ? (
           <p className="text-red-400">{error}</p>
+        ) : displayEvents.length === 0 ? (
+          <p className="text-neutral-300">New events are on the way. Check back soon.</p>
         ) : (
           <div className="grid md:grid-cols-2 gap-8">
             {displayEvents.map((event) => {
@@ -367,6 +369,24 @@ export default function EventsPage() {
       <section className="py-16 px-6 max-w-6xl mx-auto">
         {!loading && <UpcomingCalendar eventsData={calendarEvents} />}
       </section>
+
+      {!loading && !error && pastEvents.length > 0 && (
+        <section className="px-6 pb-16 max-w-6xl mx-auto space-y-8">
+          <h2 className="text-4xl font-extrabold">Past Events</h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            {pastEvents.map(event => (
+              <article key={event.id} className="rounded-3xl border border-blue-500/40 bg-neutral-900/50 p-6 shadow-xl shadow-blue-900/30 flex flex-col gap-4">
+                <p className="text-xs uppercase tracking-[0.25em] text-blue-200">Past event</p>
+                <h3 className="text-2xl font-bold">{event.title}</h3>
+                <p className="text-blue-100">{event.startDate ? formatDateLabel(event.startDate.toISOString()) : event.dateKey}{event.timeLabel ? ` • ${event.timeLabel} PT` : ""}</p>
+                <p className="text-neutral-200">{event.description || "Details coming soon."}</p>
+                <p className="text-sm text-neutral-300">{event.location || "Location TBA"}</p>
+                <Link href={`/checkin?event=${encodeURIComponent(event.id)}`} className="text-blue-200 underline">View event</Link>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   );
 }
