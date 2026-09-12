@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useMemberSession } from "@/lib/memberSession";
 
 type ClubEvent = { id: string; title: string; description: string | null; location: string | null; checkinOpensAt: string | null; checkinClosesAt: string | null };
 const dateLabel = (value: string | null) => value ? new Date(value).toLocaleString("en-US", { timeZone: "America/Los_Angeles", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " PT" : "Time to be announced";
@@ -12,13 +11,12 @@ function calendar(event: ClubEvent) {
   return "https://calendar.google.com/calendar/render?" + new URLSearchParams({ action: "TEMPLATE", text: event.title, dates: stamp(event.checkinOpensAt) + "/" + stamp(event.checkinClosesAt), details: event.description || "", location: event.location || "" });
 }
 export default function EventExperience({ checkin = false }: { checkin?: boolean }) {
-  const { session, ready } = useMemberSession();
   const [events, setEvents] = useState<ClubEvent[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
-  const [attendanceError, setAttendanceError] = useState("");
   const [attended, setAttended] = useState<string[]>([]);
-  const [attendanceReady, setAttendanceReady] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [id, setId] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -34,18 +32,6 @@ export default function EventExperience({ checkin = false }: { checkin?: boolean
     }).catch(err => setError(err.message)).finally(() => setLoaded(true));
     return () => clearInterval(timer);
   }, []);
-  useEffect(() => {
-    let active = true;
-    setAttendanceReady(false);
-    setAttended([]);
-    if (!session) return;
-    fetch("/api/events/attendance", { headers: { Authorization: "Bearer " + session.access_token } }).then(async res => {
-      if (!res.ok) throw new Error("Attendance could not be loaded. Please refresh before checking in.");
-      const data = await res.json();
-      if (active) { setAttended(data.eventIds); setAttendanceReady(true); setAttendanceError(""); }
-    }).catch(err => { if (active) setAttendanceError(err.message); });
-    return () => { active = false; };
-  }, [session]);
   const open = (event: ClubEvent) => Boolean(event.checkinOpensAt && event.checkinClosesAt && now >= Date.parse(event.checkinOpensAt) && now < Date.parse(event.checkinClosesAt));
   const past = (event: ClubEvent) => Boolean(event.checkinClosesAt && now >= Date.parse(event.checkinClosesAt));
   const sorted = [...events].sort((a, b) => (Date.parse(a.checkinOpensAt || "") || Infinity) - (Date.parse(b.checkinOpensAt || "") || Infinity));
@@ -53,14 +39,14 @@ export default function EventExperience({ checkin = false }: { checkin?: boolean
   const upcoming = sorted.filter(event => !past(event));
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!session || !selected) return;
+    if (!selected || busy) return;
     setBusy(true); setError("");
     try {
-      const res = await fetch("/api/events/check-in-kiosk", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.access_token }, body: JSON.stringify({ eventId: selected.id, accessCode: code }) });
+      const res = await fetch("/api/events/check-in-kiosk", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventId: selected.id, accessCode: code, name, email }), signal: AbortSignal.timeout(15000) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Please try again.");
       setAttended(current => [...current, selected.id]);
-      setConfirmation("Confirmed at " + new Date().toLocaleTimeString());
+      setConfirmation("Attendance recorded for " + email.trim().toLowerCase() + ". Repeated submissions do not add another attendance record.");
       setCode("");
     } catch (err) { setError(err instanceof Error ? err.message : "Check-in failed."); }
     finally { setBusy(false); }
@@ -86,9 +72,14 @@ export default function EventExperience({ checkin = false }: { checkin?: boolean
       {!loaded ? <p role="status">Loading events...</p> : checkin && id ? selected ? <div className="space-y-6">
         {card(selected)}
         <section className="rounded-3xl border border-white/15 bg-slate-950/40 p-6 sm:p-8">
-          {attended.includes(id) ? <div role="status"><h2 className="text-2xl font-bold text-emerald-300">You are checked in to {selected.title}.</h2><p className="mt-3">{confirmation || "Your attendance has been recorded."}</p></div> : !ready ? <p>Checking login...</p> : !open(selected) ? <p>{past(selected) ? "Check-in has closed." : "Check-in opens " + dateLabel(selected.checkinOpensAt) + "."}</p> : !session ? <><p className="mb-5">Log in to record your attendance. We will bring you back to this event.</p><Link className={action} href={"/join?next=" + encodeURIComponent("/checkin?event=" + id)}>Log in to check in</Link></> : !attendanceReady ? <p role="status">{attendanceError || "Checking attendance..."}</p> : <form onSubmit={submit} className="max-w-md space-y-4">
+          {attended.includes(id) ? <div role="status"><h2 className="text-2xl font-bold text-emerald-300">You are checked in to {selected.title}.</h2><p className="mt-3">{confirmation || "Your attendance has been recorded."}</p><button className={action + " mt-5"} onClick={() => { setAttended([]); setName(""); setEmail(""); setConfirmation(""); }}>Check in another person</button></div> : !open(selected) ? <p>{past(selected) ? "Check-in has closed." : "Check-in opens " + dateLabel(selected.checkinOpensAt) + "."}</p> : <form onSubmit={submit} className="max-w-md space-y-4">
             <h2 className="text-2xl font-bold">Check in</h2>
-            <p className="text-slate-300">Checking in as {session.user.email}</p>
+            <p className="text-slate-300">No account or email link needed. Use the same UCSD email at each event so we can count your attendance accurately.</p>
+            <label htmlFor="name" className="block">Full name</label>
+            <input id="name" required maxLength={120} autoComplete="name" value={name} onChange={e => setName(e.target.value)} className="w-full rounded-xl border border-white/20 bg-slate-950 px-4 py-3" />
+            <label htmlFor="email" className="block">UCSD email</label>
+            <input id="email" type="email" required maxLength={254} autoComplete="email" placeholder="name@ucsd.edu" value={email} onChange={e => setEmail(e.target.value)} className="w-full rounded-xl border border-white/20 bg-slate-950 px-4 py-3" />
+            <p className="text-sm text-slate-400">Your name, email, and attendance are recorded for HealthLink board analytics. Email addresses are not verified.</p>
             <label htmlFor="code" className="block">Event code <span className="text-slate-400">(if provided by the board)</span></label>
             <input id="code" value={code} onChange={e => setCode(e.target.value)} className="w-full rounded-xl border border-white/20 bg-slate-950 px-4 py-3" autoComplete="off" />
             <button disabled={busy} className={action + " disabled:opacity-50"}>{busy ? "Recording..." : "Check in to this event"}</button>
@@ -101,4 +92,3 @@ export default function EventExperience({ checkin = false }: { checkin?: boolean
     </div>
   </main>;
 }
-

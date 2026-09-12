@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-type AuthenticatedUserMetadata = {
-  full_name?: string;
-  name?: string;
-};
-
 /**
  * POST /api/events/check-in-kiosk
  * Body: { eventId: string, accessCode: string, email: string, name?: string }
@@ -14,31 +9,21 @@ type AuthenticatedUserMetadata = {
  */
 export async function POST(req: Request) {
   try {
-    const authorization = req.headers.get("authorization");
-    const accessToken = authorization?.startsWith("Bearer ")
-      ? authorization.slice("Bearer ".length).trim()
-      : null;
-
-    if (!accessToken) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid check-in details." }, { status: 400 });
     }
+    const { eventId, accessCode, email, name } = body;
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseAdmin.auth.getUser(accessToken);
-
-    if (userError || !user?.email) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
-
-    const { eventId, accessCode } = await req.json();
-
-    if (typeof eventId !== "string" || (accessCode != null && typeof accessCode !== "string")) {
+    if (typeof eventId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(eventId) || (accessCode != null && (typeof accessCode !== "string" || accessCode.length > 128))) {
       return NextResponse.json(
         { error: "eventId and accessCode are required" },
         { status: 400 },
       );
+    }
+    if (typeof email !== "string" || email.length > 254 || !/^[^\s@]+@ucsd\.edu$/i.test(email.trim()) ||
+        typeof name !== "string" || !name.trim() || name.trim().length > 120) {
+      return NextResponse.json({ error: "Enter your name and a valid UCSD email address." }, { status: 400 });
     }
 
     // Verify event and code
@@ -54,30 +39,22 @@ export async function POST(req: Request) {
 
     const now = Date.now();
     if (!event.checkin_opens_at || !event.checkin_closes_at ||
+        !Number.isFinite(Date.parse(event.checkin_opens_at)) || !Number.isFinite(Date.parse(event.checkin_closes_at)) ||
         now < new Date(event.checkin_opens_at).getTime() ||
         now >= new Date(event.checkin_closes_at).getTime()) {
       return NextResponse.json({ error: "Check-in is not open for this event." }, { status: 403 });
-    }
-    if (!user.email_confirmed_at || !user.email.toLowerCase().endsWith("@ucsd.edu")) {
-      return NextResponse.json({ error: "A verified UCSD email is required." }, { status: 403 });
     }
     if (event.checkin_code && event.checkin_code !== accessCode?.trim()) {
       return NextResponse.json({ error: "Invalid access code" }, { status: 401 });
     }
 
-    const normalizedEmail = user.email.trim().toLowerCase();
-    const metadata = (user.user_metadata ?? {}) as AuthenticatedUserMetadata;
-    const displayName =
-      metadata.full_name ||
-      metadata.name ||
-      user.email.split("@")[0] ||
-      null;
+    const normalizedEmail = email.trim().toLowerCase();
 
     // Insert attendance into Supabase table
     const { error: insertError } = await supabaseAdmin.from("attendances").insert({
       event_id: eventId,
       email: normalizedEmail,
-      name: typeof displayName === "string" ? displayName.trim() : null,
+      name: name.trim(),
     });
 
     if (insertError) {
@@ -88,7 +65,7 @@ export async function POST(req: Request) {
         );
       }
       return NextResponse.json(
-        { error: insertError.message || "Failed to check in" },
+        { error: "Attendance could not be saved. Please try again." },
         { status: 500 },
       );
     }
@@ -97,7 +74,7 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     console.error("Kiosk check-in error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to check in" },
+      { error: "Check-in is temporarily unavailable. Please try again." },
       { status: 500 },
     );
   }

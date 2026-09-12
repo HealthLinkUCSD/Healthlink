@@ -113,7 +113,7 @@ export default function AnalyticsPage() {
               Sign in with your HealthLink board account to view analytics.
             </p>
             <Link
-              href="/join?next=/analytics"
+              href="/board/login"
               className="inline-flex rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-5 py-3 font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:scale-[1.01]"
             >
               Sign in
@@ -121,6 +121,7 @@ export default function AnalyticsPage() {
           </div>
         ) : (
           <div className="space-y-4">
+            <p className="text-neutral-300">{attendees.length} unique email addresses. Attendance is self-reported; email addresses are not verified.</p>
             <p className="text-sm text-blue-100">
               Signed in as <span className="font-semibold">{sessionEmail}</span>
             </p>
@@ -150,7 +151,7 @@ export default function AnalyticsPage() {
                         <td className="px-4 py-3">
                           {attendee.isMember ? (
                             <span className="rounded-full bg-emerald-400/20 px-2.5 py-1 text-xs font-semibold text-emerald-200">
-                              Member
+                              Returning attendee
                             </span>
                           ) : (
                             <span className="text-neutral-300">-</span>

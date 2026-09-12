@@ -43,16 +43,20 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const { data, error } = await supabaseAdmin
-      .from("attendances")
-      .select("email, name")
-      .not("email", "is", null);
-
-    if (error) {
-      return NextResponse.json(
-        { error: error.message || "Failed to fetch attendees" },
-        { status: 500 },
-      );
+    // Supabase caps individual responses; paginate so totals include every attendee.
+    const data: AttendanceRow[] = [];
+    for (let offset = 0; ; offset += 1000) {
+      const { data: page, error } = await supabaseAdmin
+        .from("attendances")
+        .select("email, name")
+        .not("email", "is", null)
+        .order("id")
+        .range(offset, offset + 999);
+      if (error) {
+        return NextResponse.json({ error: "Failed to fetch attendees" }, { status: 500 });
+      }
+      data.push(...(page ?? []));
+      if (!page || page.length < 1000) break;
     }
 
     const grouped = new Map<string, { email: string; name: string; count: number }>();
