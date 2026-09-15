@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import TrackCards from "./TrackCards";
+import PastHackathonGallery from "./PastHackathonGallery";
 
 export const metadata: Metadata = { title: "Hackathon 2026 | HealthLink UCSD", description: "Build a working life-sciences prototype with HealthLink, October 2-4 at The Basement. Four tracks. Signup deadline September 30." };
 const button = "inline-block rounded-full bg-blue-500 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-900/40 hover:bg-blue-400 transition";
@@ -28,7 +29,7 @@ export default function HackathonPage() {
         <div className="rounded-3xl border border-blue-500/30 bg-white/5 p-6 space-y-3"><h3 className="text-xl font-bold">OpenSwarm is optional. Building is not.</h3><p className="text-neutral-300">OpenSwarm is free, open source, and available to every team, regardless of track. Teams that use it will be evaluated on how effectively they put it to work.</p><p className="text-sm text-blue-200">Build with synthetic or appropriately authorized, de-identified data. Hackathon prototypes are for demonstration, not clinical use.</p></div>
       </section>
       <section className="rounded-3xl border border-blue-500/40 bg-gradient-to-r from-blue-600/20 to-transparent p-8 sm:p-10"><p className="text-xs uppercase tracking-[0.2em] text-blue-300">Our ecosystem</p><h2 className="mt-3 text-4xl font-extrabold">Partners behind the problems.</h2><p className="my-5 max-w-2xl text-neutral-300">Meet the track partners bringing domain expertise to the weekend. The sponsorship lineup is coming soon.</p><Link href="/hackathon/sponsors" className={button}>Sponsors & partners</Link></section>
-      <section className="space-y-6"><div><h2 className="text-3xl font-medium text-blue-300">Last year at HealthLink</h2></div><div className="grid gap-6 sm:grid-cols-3">{["Photo highlights", "Prizes & winning builds", "Last year's sponsors"].map(title => <article key={title} className="flex min-h-52 flex-col justify-end rounded-3xl border border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-white/5 p-6"><h3 className="text-xl font-bold">{title}</h3><p className="mt-3 text-neutral-400">Coming soon</p></article>)}</div></section>
+      <section id="last-year" className="scroll-mt-28 space-y-6"><h2 className="text-3xl font-medium text-blue-300">Last year at HealthLink</h2><PastHackathonGallery /></section>
       <section id="signup" className="scroll-mt-28 rounded-3xl border border-blue-400/40 bg-blue-500/10 p-8 text-center sm:p-12"><h2 className="text-3xl font-medium text-blue-300">Applications</h2><p className="mt-4 text-lg text-neutral-200">Signup deadline: September 30, 2026.</p><p className="mt-5 rounded-xl border border-white/10 bg-white/5 p-4 text-blue-200">Google signup form coming soon.</p><p className="mt-4 text-sm text-neutral-300">Questions? <a className="underline hover:text-blue-200" href="mailto:healthlink@ucsd.edu">healthlink@ucsd.edu</a></p></section>
     </div>
   </main>;
