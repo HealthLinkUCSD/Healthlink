@@ -26,8 +26,8 @@ export default function TrackCards() {
           <div className={`${styles.face} ${styles.back}`} aria-hidden={!active} inert={!active}>
             <div className="flex items-center justify-between gap-3"><h3 className="text-lg font-bold">Track 0{index + 1} / The brief</h3><button type="button" data-focus={`${index}-back`} className="rounded-full border border-blue-300/40 px-3 py-2 text-sm hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-blue-300" onClick={() => { lastTrack.current = index; setFlipped(values => values.filter(value => value !== index)); }}>Flip back</button></div>
             <div className="mt-5 space-y-4 text-sm leading-relaxed text-neutral-200">
-              <p><strong className="text-blue-200">The problem</strong><br />{track.problem}</p>
-              <p><strong className="text-blue-200">The objective</strong><br />{track.objective}</p>
+              <p><strong className="text-blue-200">{index === 3 ? "The brief" : "The problem"}</strong><br />{track.problem}</p>
+              <p><strong className="text-blue-200">{index === 3 ? "The standard" : "The objective"}</strong><br />{track.objective}</p>
               <div><p className="font-bold text-blue-200">Ideas to explore</p><ul className="list-disc space-y-1 pl-5">{track.ideas.map(idea => <li key={idea}>{idea}</li>)}</ul></div>
               <p className="border-t border-white/10 pt-4">{track.detail}</p>
             </div>
