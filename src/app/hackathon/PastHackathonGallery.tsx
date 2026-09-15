@@ -19,12 +19,11 @@ const photos = [
 export default function PastHackathonGallery() {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [hovered, setHovered] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(true);
   const [visible, setVisible] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
-  const playing = !paused && !hovered && !reducedMotion && visible;
+  const playing = !paused && !reducedMotion && visible;
 
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -51,7 +50,6 @@ export default function PastHackathonGallery() {
   const control = "min-h-11 rounded-full border border-blue-300/30 px-4 py-2 text-sm text-blue-100 hover:bg-blue-400/10 focus-visible:outline-2 focus-visible:outline-blue-300";
 
   return <div ref={root} role="region" aria-roledescription="carousel" aria-label="Last year's hackathon photos" className="overflow-hidden rounded-3xl border border-blue-500/30 bg-slate-950/50 shadow-xl shadow-blue-900/20"
-    onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
     onFocusCapture={event => { if (!(event.target instanceof HTMLElement) || !event.target.hasAttribute("data-playback")) setPaused(true); }}
     onKeyDown={event => {
       if (event.key === "ArrowRight") { event.preventDefault(); go(index + 1); }
