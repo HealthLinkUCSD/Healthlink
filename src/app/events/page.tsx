@@ -311,7 +311,7 @@ export default function EventsPage() {
             <p className="text-xs uppercase tracking-[0.2em] text-blue-300">October 2-4, 2026 / The Basement</p>
             <h3 className="text-3xl font-bold">HealthLink Hackathon</h3>
             <p className="text-neutral-300">Four tracks. A working prototype by Sunday. Signup deadline September 30; daily schedule coming soon.</p>
-            <div className="flex flex-wrap gap-3"><Link href="/hackathon" className="inline-block rounded-full bg-blue-500 px-6 py-3 font-semibold hover:bg-blue-400">Explore the hackathon</Link><Link href={`/checkin?event=${encodeURIComponent(HACKATHON_EVENT_ID)}`} className="inline-block rounded-full border border-blue-300/50 px-6 py-3 font-semibold text-blue-100 hover:bg-blue-400/10">Check in</Link></div>
+            <div className="flex flex-wrap gap-3"><Link href="/hackathon" className="inline-block rounded-full bg-blue-500 px-6 py-3 font-semibold hover:bg-blue-400">Explore the hackathon</Link><Link href={`/checkin?event=${encodeURIComponent(HACKATHON_EVENT_ID)}#check-in-form`} className="inline-block rounded-full border border-blue-300/50 px-6 py-3 font-semibold text-blue-100 hover:bg-blue-400/10">Check in</Link></div>
           </article>
         ) : null}
 
@@ -365,7 +365,7 @@ export default function EventsPage() {
                     <span>{event.location || "Location TBA"}</span>
                   </div>
                   <div className="flex flex-wrap gap-3">
-                    <Link href={`/checkin?event=${encodeURIComponent(event.id)}`} className="rounded-xl bg-blue-500 px-4 py-3 font-semibold hover:bg-blue-400">View event / Check in</Link>
+                    <Link href={`/checkin?event=${encodeURIComponent(event.id)}#check-in-form`} className="rounded-xl bg-blue-500 px-4 py-3 font-semibold hover:bg-blue-400">View event / Check in</Link>
                     {calendarUrl && <a href={calendarUrl} target="_blank" rel="noreferrer" className="rounded-xl border border-blue-300/40 px-4 py-3 font-semibold text-blue-100 hover:bg-blue-400/10">Add to Google Calendar</a>}
                   </div>
                 </div>
