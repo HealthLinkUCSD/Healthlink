@@ -30,6 +30,13 @@ export default function EventExperience({ checkin = false }: { checkin?: boolean
   }, []);
   const open = (event: ClubEvent) => Boolean(event.checkinOpensAt && event.checkinClosesAt && now >= Date.parse(event.checkinOpensAt) && now < Date.parse(event.checkinClosesAt));
   const past = (event: ClubEvent) => Boolean(event.checkinClosesAt && now >= Date.parse(event.checkinClosesAt));
+  const configured = (event: ClubEvent) => Boolean(
+    event.checkinOpensAt &&
+    event.checkinClosesAt &&
+    Number.isFinite(Date.parse(event.checkinOpensAt)) &&
+    Number.isFinite(Date.parse(event.checkinClosesAt)) &&
+    Date.parse(event.checkinClosesAt) > Date.parse(event.checkinOpensAt),
+  );
   const sorted = [...events].sort((a, b) => (Date.parse(a.checkinOpensAt || "") || Infinity) - (Date.parse(b.checkinOpensAt || "") || Infinity));
   const selected = events.find(event => event.id === id);
   const upcoming = sorted.filter(event => !past(event));
@@ -51,12 +58,12 @@ export default function EventExperience({ checkin = false }: { checkin?: boolean
   function card(event: ClubEvent, featured = false) {
     const calendarUrl = googleCalendarUrl(event);
     return <article key={event.id} className={"rounded-3xl border p-6 sm:p-8 " + (featured ? "border-blue-400/40 bg-gradient-to-br from-blue-500/20 to-transparent" : "border-white/10 bg-white/5")}>
-      <p className="text-xs uppercase tracking-[0.18em] text-blue-200">{attended.includes(event.id) ? "Attended" : open(event) ? "Check-in open" : past(event) ? "Past event" : featured ? "Next up" : "Upcoming"}</p>
+      <p className="text-xs uppercase tracking-[0.18em] text-blue-200">{attended.includes(event.id) ? "Attended" : open(event) ? "Check-in open" : past(event) ? "Past event" : configured(event) ? featured ? "Next up" : "Upcoming" : "Check-in details coming soon"}</p>
       <h2 className="mt-4 text-3xl font-bold">{event.title}</h2>
       <p className="mt-3 text-blue-100">{dateLabel(event.checkinOpensAt)}</p>
       <p className="mt-1 text-slate-300">{event.location || "Location to be announced"}</p>
       <p className="my-6 max-w-2xl text-slate-300">{event.description || "Come connect with the HealthLink community."}</p>
-      <Link className={action} href={"/checkin?event=" + encodeURIComponent(event.id)}>{attended.includes(event.id) ? "View attendance" : open(event) ? "Check in" : "View event"}</Link>
+      <Link className={action} href={"/checkin?event=" + encodeURIComponent(event.id)}>{attended.includes(event.id) ? "View attendance" : open(event) ? "Check in" : "View event / Check in"}</Link>
       {calendarUrl ? <a className="mt-3 inline-block rounded-xl border border-blue-300/40 px-5 py-3 font-semibold text-blue-100 hover:bg-blue-400/10 sm:ml-4" href={calendarUrl} target="_blank" rel="noreferrer" aria-label={`Add ${event.title} to Google Calendar (opens in a new tab)`}>Add to Google Calendar</a> : <p className="mt-3 text-sm text-slate-400">Calendar link available once the event time is confirmed.</p>}
     </article>;
   }
@@ -69,7 +76,7 @@ export default function EventExperience({ checkin = false }: { checkin?: boolean
       {!loaded ? <p role="status">Loading events...</p> : checkin && id ? selected ? <div className="space-y-6">
         {card(selected)}
         <section className="rounded-3xl border border-white/15 bg-slate-950/40 p-6 sm:p-8">
-          {attended.includes(id) ? <div role="status"><h2 className="text-2xl font-bold text-emerald-300">You are checked in to {selected.title}.</h2><p className="mt-3">{confirmation || "Your attendance has been recorded."}</p><button className={action + " mt-5"} onClick={() => { setAttended([]); setName(""); setEmail(""); setConfirmation(""); }}>Check in another person</button></div> : !open(selected) ? <p>{past(selected) ? "Check-in has closed." : "Check-in opens " + dateLabel(selected.checkinOpensAt) + "."}</p> : <form onSubmit={submit} className="max-w-md space-y-4">
+          {attended.includes(id) ? <div role="status"><h2 className="text-2xl font-bold text-emerald-300">You are checked in to {selected.title}.</h2><p className="mt-3">{confirmation || "Your attendance has been recorded."}</p><button className={action + " mt-5"} onClick={() => { setAttended([]); setName(""); setEmail(""); setConfirmation(""); }}>Check in another person</button></div> : !configured(selected) ? <div role="status" className="space-y-3"><h2 className="text-2xl font-bold">Check-in is not open yet.</h2><p className="text-slate-300">The board has not published a valid check-in window for this event. Please refresh after the event time is set.</p><button type="button" className="rounded-xl border border-blue-300/40 px-5 py-3 font-semibold text-blue-100 hover:bg-blue-400/10" onClick={() => window.location.reload()}>Refresh event status</button></div> : !open(selected) ? <p>{past(selected) ? "Check-in has closed." : "Check-in opens " + dateLabel(selected.checkinOpensAt) + "."}</p> : <form onSubmit={submit} className="max-w-md space-y-4">
             <h2 className="text-2xl font-bold">Check in</h2>
             <p className="text-slate-300">No account or email link needed. Use the same UCSD email at each event so we can count your attendance accurately.</p>
             <label htmlFor="name" className="block">Full name</label>

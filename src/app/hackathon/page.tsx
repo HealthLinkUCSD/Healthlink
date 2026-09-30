@@ -3,6 +3,7 @@ import Link from "next/link";
 import TrackCards from "./TrackCards";
 import PastHackathonGallery from "./PastHackathonGallery";
 import PartnerGraphic from "./PartnerGraphic";
+import { HACKATHON_EVENT_ID } from "@/lib/hackathon";
 
 export const metadata: Metadata = { title: "Hackathon 2026 | HealthLink UCSD", description: "Build a working life-sciences prototype with HealthLink, October 2-4 at The Basement. Four tracks. Signup deadline September 30." };
 const button = "inline-block rounded-full bg-blue-500 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-900/40 hover:bg-blue-400 transition";
@@ -16,7 +17,7 @@ export default function HackathonPage() {
         <h1 className="text-5xl font-extrabold leading-tight sm:text-7xl">HealthLink Hackathon</h1>
         <p className="text-xl text-blue-100 sm:text-2xl">Build something that moves healthcare forward.</p>
         <p className="mx-auto max-w-2xl text-neutral-300">Three days. Four tracks. A working prototype by Sunday. Bring a problem worth solving and turn it into something real.</p>
-        <div className="flex flex-wrap justify-center gap-3"><a href="#signup" className={button}>Signup details</a><a href="#tracks" className="rounded-full border border-white/25 px-6 py-3 font-semibold hover:bg-white/10">Explore the tracks</a></div>
+        <div className="flex flex-wrap justify-center gap-3"><a href="#signup" className={button}>Signup details</a><a href="#tracks" className="rounded-full border border-white/25 px-6 py-3 font-semibold hover:bg-white/10">Explore the tracks</a><Link href={`/checkin?event=${encodeURIComponent(HACKATHON_EVENT_ID)}`} className="rounded-full border border-blue-300/50 px-6 py-3 font-semibold text-blue-100 hover:bg-blue-400/10">Check in</Link></div>
         <p className="text-sm text-blue-200">Signup deadline: September 30</p>
       </div>
     </section>
