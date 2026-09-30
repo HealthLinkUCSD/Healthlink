@@ -18,8 +18,10 @@ export default function EventExperience({ checkin = false }: { checkin?: boolean
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(0);
   const [confirmation, setConfirmation] = useState("");
+  const [showForm, setShowForm] = useState(false);
   useEffect(() => {
     setId(new URLSearchParams(window.location.search).get("event"));
+    setShowForm(window.location.hash === "#check-in-form");
     setNow(Date.now());
     const timer = setInterval(() => setNow(Date.now()), 30000);
     fetch("/api/events/all").then(async res => {
@@ -63,7 +65,7 @@ export default function EventExperience({ checkin = false }: { checkin?: boolean
       <p className="mt-3 text-blue-100">{dateLabel(event.checkinOpensAt)}</p>
       <p className="mt-1 text-slate-300">{event.location || "Location to be announced"}</p>
       <p className="my-6 max-w-2xl text-slate-300">{event.description || "Come connect with the HealthLink community."}</p>
-      <Link className={action} href={"/checkin?event=" + encodeURIComponent(event.id) + "#check-in-form"}>{attended.includes(event.id) ? "View attendance" : open(event) ? "Check in" : "View event / Check in"}</Link>
+      <Link className={action} href={"/checkin?event=" + encodeURIComponent(event.id) + "#check-in-form"} onClick={() => setShowForm(true)}>{attended.includes(event.id) ? "View attendance" : open(event) ? "Check in" : "View event / Check in"}</Link>
       {calendarUrl ? <a className="mt-3 inline-block rounded-xl border border-blue-300/40 px-5 py-3 font-semibold text-blue-100 hover:bg-blue-400/10 sm:ml-4" href={calendarUrl} target="_blank" rel="noreferrer" aria-label={`Add ${event.title} to Google Calendar (opens in a new tab)`}>Add to Google Calendar</a> : <p className="mt-3 text-sm text-slate-400">Calendar link available once the event time is confirmed.</p>}
     </article>;
   }
@@ -75,7 +77,7 @@ export default function EventExperience({ checkin = false }: { checkin?: boolean
       {error && <p role="alert" className="my-5 text-red-300">{error}</p>}
       {!loaded ? <p role="status">Loading events...</p> : checkin && id ? selected ? <div className="space-y-6">
         {card(selected)}
-        <section id="check-in-form" className="scroll-mt-24 rounded-3xl border border-white/15 bg-slate-950/40 p-6 sm:p-8">
+        {showForm && <section id="check-in-form" className="scroll-mt-24 rounded-3xl border border-white/15 bg-slate-950/40 p-6 sm:p-8">
           {attended.includes(id) ? <div role="status"><h2 className="text-2xl font-bold text-emerald-300">You are checked in to {selected.title}.</h2><p className="mt-3">{confirmation || "Your attendance has been recorded."}</p><button className={action + " mt-5"} onClick={() => { setAttended([]); setName(""); setEmail(""); setConfirmation(""); }}>Check in another person</button></div> : !configured(selected) ? <div role="status" className="space-y-3"><h2 className="text-2xl font-bold">Check-in is not open yet.</h2><p className="text-slate-300">The board has not published a valid check-in window for this event. Please refresh after the event time is set.</p><button type="button" className="rounded-xl border border-blue-300/40 px-5 py-3 font-semibold text-blue-100 hover:bg-blue-400/10" onClick={() => window.location.reload()}>Refresh event status</button></div> : !open(selected) ? <p>{past(selected) ? "Check-in has closed." : "Check-in opens " + dateLabel(selected.checkinOpensAt) + "."}</p> : <form onSubmit={submit} className="max-w-md space-y-4">
             <h2 className="text-2xl font-bold">Check in</h2>
             <p className="text-slate-300">No account or email link needed. Use the same UCSD email at each event so we can count your attendance accurately.</p>
@@ -89,7 +91,7 @@ export default function EventExperience({ checkin = false }: { checkin?: boolean
             <input id="code" required maxLength={128} aria-describedby="code-help" value={code} onChange={e => setCode(e.target.value)} className="w-full rounded-xl border border-white/20 bg-slate-950 px-4 py-3" autoComplete="off" autoCapitalize="none" spellCheck={false} />
             <button disabled={busy} className={action + " disabled:opacity-50"}>{busy ? "Recording..." : "Check in to this event"}</button>
           </form>}
-        </section><Link className="inline-block text-blue-200 underline" href="/events">All events</Link>
+        </section>}<Link className="inline-block text-blue-200 underline" href="/events">All events</Link>
       </div> : <p>Event not found. <Link href="/events" className="underline">Browse events</Link></p> : <>
         {upcoming.length ? <div className="space-y-6">{card(upcoming[0], true)}<div className="grid gap-6 md:grid-cols-2">{upcoming.slice(1).map(event => card(event))}</div></div> : <p className="rounded-3xl border border-white/10 p-8">New events are on the way. Check back soon.</p>}
         {sorted.some(past) && <><h2 className="mt-14 mb-6 text-2xl font-bold">Past events</h2><div className="grid gap-6 md:grid-cols-2">{sorted.filter(past).reverse().map(event => card(event))}</div></>}
