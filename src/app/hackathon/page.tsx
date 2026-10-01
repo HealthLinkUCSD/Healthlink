@@ -7,6 +7,7 @@ import { HACKATHON_EVENT_ID } from "@/lib/hackathon";
 
 export const metadata: Metadata = { title: "Hackathon 2026 | HealthLink UCSD", description: "Build a working life-sciences prototype with HealthLink, October 2-4 at The Basement. Four tracks. Signup deadline September 30." };
 const button = "inline-block rounded-full bg-blue-500 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-900/40 hover:bg-blue-400 transition";
+const signupUrl = "https://luma.com/szki6vpc";
 
 export default function HackathonPage() {
   return <main className="min-h-screen bg-gradient-to-b from-[#071225] via-[#0a1b35] to-[#102647] text-white">
@@ -32,7 +33,7 @@ export default function HackathonPage() {
       </section>
       <section className="rounded-3xl border border-blue-500/40 bg-gradient-to-r from-blue-600/20 to-transparent p-8 sm:p-10"><p className="text-xs uppercase tracking-[0.2em] text-blue-300">Our ecosystem</p><h2 className="mt-3 text-4xl font-extrabold">Partners behind the problems.</h2><p className="my-5 max-w-2xl text-neutral-300">OpenSwarm, Harbor, CLD-9, Raisi, Agencity, and Rho are joining the fall hackathon.</p><PartnerGraphic /><div className="mt-6"><Link href="/hackathon/sponsors" className={button}>Sponsors & partners</Link></div></section>
       <section id="last-year" className="scroll-mt-28 space-y-6"><h2 className="text-3xl font-medium text-blue-300">Last year at HealthLink</h2><PastHackathonGallery /></section>
-      <section id="signup" className="scroll-mt-28 rounded-3xl border border-blue-400/40 bg-blue-500/10 p-8 text-center sm:p-12"><h2 className="text-3xl font-medium text-blue-300">Applications</h2><p className="mt-4 text-lg text-neutral-200">Signup deadline: September 30, 2026.</p><p className="mt-5 rounded-xl border border-white/10 bg-white/5 p-4 text-blue-200">Google signup form coming soon.</p><p className="mt-4 text-sm text-neutral-300">Questions? <a className="underline hover:text-blue-200" href="mailto:healthlink@ucsd.edu">healthlink@ucsd.edu</a></p></section>
+      <section id="signup" className="scroll-mt-28 rounded-3xl border border-blue-400/40 bg-blue-500/10 p-8 text-center sm:p-12"><h2 className="text-3xl font-medium text-blue-300">Applications</h2><p className="mt-4 text-lg text-neutral-200">Signup deadline: September 30, 2026.</p><a className={button + " mt-5"} href={signupUrl} target="_blank" rel="noreferrer">Sign up on Luma</a><p className="mt-4 text-sm text-neutral-300">Questions? <a className="underline hover:text-blue-200" href="mailto:healthlink@ucsd.edu">healthlink@ucsd.edu</a></p></section>
     </div>
   </main>;
 }
